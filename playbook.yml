@@ -1,5 +1,5 @@
 ---
-- name: "Ansible playbook example"
+- name: "Logicwax new host init"
   become: true
   hosts: 127.0.0.1
   connection: local
@@ -9,50 +9,85 @@
       apt:
         pkg:
         - ccze
-        - gnupg2
-        - libpam-ssh-agent-auth
-        - ncdu
-        - htop
         - emacs
-        - strace
-        - rsync
-        - pinentry-tty
+        - fonts-powerline
+        - gnupg2
         - gnutls-bin
-        - monkeysphere
         - gpgv
         - gpgv2
-        - pgpdump
+        - htop
         - keyutils
-        - zsh
-        - powerline
-        - fonts-powerline
-        - zsh-syntax-highlighting
-        - zsh-autosuggestions
-        - scdaemon
-        - yubikey-personalization
-        - u2f-host
         - libccid
+        - libpam-ssh-agent-auth
         - libpcsclite1
-        - pcscd
-        - python-dev
+        - monkeysphere
+        - ncdu
+        - openssh-server
         - pass
+        - pcscd
+        - pgpdump
+        - pinentry-tty
+        - powerline
+        - python-dev
+        - rsync
+        - scdaemon
+        - strace
+        - u2f-host
+        - yubikey-personalization
+        - zsh
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting
 
     - name: Install oh-my-zsh
-      shell: "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+      shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+      args:
+          creates: /home/{{ user }}/.oh-my-zsh
+      become: yes
+      become_user: "{{ user }}"
+
+    - name: Changing shell to zsh
+      shell: chsh -s /bin/zsh {{ user }}
 
     - name: Config oh-my-zsh theme
-      replace:
-        path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
-        regexp: '(?P<dirprompt>^\s+prompt_segment) blue \$CURRENT_FG'
-        replace: '\g<dirprompt> 089 $CURRENT_FG'
+      block:
+      - shell: "cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc || true"
+      - replace:
+          path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
+          regexp: '(?P<dirprompt>^\s+prompt_segment) blue \$CURRENT_FG'
+          replace: '\g<dirprompt> 089 $CURRENT_FG'
+      - lineinfile:
+          dest: /home/{{ user }}/.zshrc
+          state: present
+          regexp: '^ZSH_THEME=.*'
+          line: 'ZSH_THEME="agnoster"'
+      - lineinfile:
+          dest: /home/{{ user }}/.zshrc
+          state: present
+          insertafter: EOF
+          line: 'source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh'
+      - lineinfile:
+          dest: /home/{{ user }}/.zshrc
+          state: present
+          insertafter: EOF
+          line: 'source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh'
+      become: yes
+      become_user: "{{ user }}"
 
-# cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc
     - name: Assign root write-only ownership
       file:
         path: /etc/security/authorized_keys
+        state: touch
         owner: root
         group: root
         mode: "0644"
+
+    - name: Install SSH key
+      authorized_key:
+        user: "{{ user }}"
+        state: present
+        key: "{{ ssh_key_url }}"
+        path: /etc/security/authorized_keys
+        manage_dir: False
 
     - name: Configure SSHd to use authorized_keys
       lineinfile:
@@ -71,7 +106,7 @@
       - lineinfile:
           path: /etc/sudoers
           state: present
-          regexp: '^%sudo.*ALL=\(ALL:ALL\) ALL\r'
+          insertafter: '^%sudo.*ALL=\(ALL:ALL\) ALL$'
           line: 'Defaults env_keep += SSH_AUTH_SOCK'
           validate: '/usr/sbin/visudo -cf %s'
 
@@ -103,7 +138,7 @@
            line: 'pinentry-program /usr/bin/pinentry-tty'
 
            
-    - name: Yubikey SSH config for shell
+    - name: Yubikey SSH config for bash shell
       blockinfile:
         path: "/home/{{ user }}/.bashrc"
         block: |
@@ -118,8 +153,9 @@
           fi
           export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
           export GPG_TTY=$(tty)
+          gpg-connect-agent updatestartuptty /bye > /dev/null
 
-    - name: Yubikey SSH config for shell
+    - name: Yubikey SSH config for z-shell
       blockinfile:
         path: "/home/{{ user }}/.zshrc"
         block: |
@@ -134,13 +170,20 @@
           fi
           export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
           export GPG_TTY=$(tty)
+          gpg-connect-agent updatestartuptty /bye > /dev/null
 
     - name: Some one-offs
-      lineinfile:
-        path: /home/{{ user }}/.bashrc
-        state: present
-        insertafter: EOF
-        line: 'alias emacs="emacs -nw "'
+      block:
+      - lineinfile:
+         path: /home/{{ user }}/.bashrc
+         state: present
+         insertafter: EOF
+         line: 'alias emacs="emacs -nw "'
+      - lineinfile:
+         path: /home/{{ user }}/.zshrc
+         state: present
+         insertafter: EOF
+         line: 'alias emacs="emacs -nw "'
 
     - name: Create udev rule to auto-detect Yubikey insertion
       block:
@@ -153,3 +196,10 @@
            dest: /etc/udev/rules.d/
            mode: "0644"
         - shell: "udevadm control -R"
+
+    - name: Install emacs config
+      shell: git clone  https://github.com/logicwax/emacsconfig.git /home/{{ user }}/.emacs.d
+      args:
+          creates: /home/{{ user }}/.emacs.d
+      become: yes
+      become_user: "{{ user }}"
