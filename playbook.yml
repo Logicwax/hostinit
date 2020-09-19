@@ -1,0 +1,157 @@
+---
+- name: "Ansible playbook example"
+  become: true
+  hosts: 127.0.0.1
+  connection: local
+  tasks:
+
+#    - name: "Check out a Git repository on the Ansible host"
+#      git:
+#        repo: git://github.com/path/to/repo.git
+#        dest: /local/path
+
+    - name: Install APT packages
+      apt:
+        pkg:
+        - ccze
+        - gnupg2
+        - libpam-ssh-agent-auth
+        - ncdu
+        - htop
+        - emacs
+        - strace
+        - rsync
+        - pinentry-tty
+        - gnutls-bin
+        - monkeysphere
+        - gpgv
+        - gpgv2
+        - pgpdump
+        - keyutils
+        - zsh
+        - powerline
+        - fonts-powerline
+        - zsh-syntax-highlighting
+        - zsh-autosuggestions
+        - scdaemon
+        - yubikey-personalization
+        - u2f-host
+        - libccid
+        - libpcsclite1
+        - pcscd
+        - python-dev
+        - pass
+
+    - name: Config oh-my-zsh theme
+      replace:
+        path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
+        regexp: '(?P<dirprompt>^\s+prompt_segment) blue \$CURRENT_FG'
+        replace: '\g<dirprompt> 089 $CURRENT_FG'
+
+# cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc
+    - name: Assign root write-only ownership
+      file:
+        path: /etc/security/authorized_keys
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Configure SSHd to use authorized_keys
+      lineinfile:
+         dest: /etc/ssh/sshd_config
+         state: present
+         regexp: '.*#.*AuthorizedKeysFile.*'
+         line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
+
+    - name: SUDO Yubikey Auth
+      block:
+      - lineinfile:
+          dest: /etc/pam.d/common-auth
+          state: present
+          insertafter: BOF
+          line: 'auth sufficient pam_ssh_agent_auth.so file=/etc/security/authorized_keys'
+      - lineinfile:
+          path: /etc/sudoers
+          state: present
+          regexp: '^%sudo.*ALL=\(ALL:ALL\) ALL\r'
+          line: 'Defaults env_keep += SSH_AUTH_SOCK'
+          validate: '/usr/sbin/visudo -cf %s'
+
+    - name: Support GPG agent forwarding
+      block:
+      - lineinfile:
+          dest: /etc/ssh/sshd_config
+          state: present
+          insertafter: EOF
+          line: 'StreamLocalBindUnlink yes'
+      - lineinfile:
+          dest: /etc/ssh/sshd_config
+          state: present
+          regexp: '^PasswordAuthentication'
+          line: 'PasswordAuthentication no'
+      - lineinfile:
+           dest: /home/{{ user }}/.gnupg/gpg-agent.conf
+           state: present
+           create: yes
+           owner: "{{ user }}"
+           group: "{{ user }}"
+           mode: "0644"
+           insertafter: BOF
+           line: 'enable-ssh-support'
+      - lineinfile:
+           dest: /home/{{ user }}/.gnupg/gpg-agent.conf
+           state: present
+           insertafter: 'enable-ssh-support'
+           line: 'pinentry-program /usr/bin/pinentry-tty'
+
+           
+    - name: Yubikey SSH config for shell
+      blockinfile:
+        path: "/home/{{ user }}/.bashrc"
+        block: |
+          envfile="$HOME/.gnupg/gpg-agent.env"
+          if ( [[ ! -e "$HOME/.gnupg/S.gpg-agent" ]] && \
+          [[ ! -e "/var/run/user/$(id -u)/gnupg/S.gpg-agent" ]] );
+          then
+            killall pinentry > /dev/null 2>&1
+            gpgconf --reload scdaemon > /dev/null 2>&1
+            pkill -x -INT gpg-agent > /dev/null 2>&1
+            gpg-agent --daemon --enable-ssh-support > $envfile
+          fi
+          export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+          export GPG_TTY=$(tty)
+
+    - name: Yubikey SSH config for shell
+      blockinfile:
+        path: "/home/{{ user }}/.zshrc"
+        block: |
+          envfile="$HOME/.gnupg/gpg-agent.env"
+          if ( [[ ! -e "$HOME/.gnupg/S.gpg-agent" ]] && \
+          [[ ! -e "/var/run/user/$(id -u)/gnupg/S.gpg-agent" ]] );
+          then
+            killall pinentry > /dev/null 2>&1
+            gpgconf --reload scdaemon > /dev/null 2>&1
+            pkill -x -INT gpg-agent > /dev/null 2>&1
+            gpg-agent --daemon --enable-ssh-support > $envfile
+          fi
+          export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+          export GPG_TTY=$(tty)
+
+    - name: Some one-offs
+      lineinfile:
+        path: /home/{{ user }}/.bashrc
+        state: present
+        insertafter: EOF
+        line: 'alias emacs="emacs -nw "'
+
+    - name: Create udev rule to auto-detect Yubikey insertion
+      block:
+        - template:
+           src: templates/insert-yubi.sh
+           dest: /usr/local/bin/
+           mode: "0744"
+        - template:
+           src: templates/69.yubikey.rules
+           dest: /etc/udev/rules.d/
+           mode: "0644"
+        - shell: "udevadm control -R"
