@@ -5,11 +5,6 @@
   connection: local
   tasks:
 
-#    - name: "Check out a Git repository on the Ansible host"
-#      git:
-#        repo: git://github.com/path/to/repo.git
-#        dest: /local/path
-
     - name: Install APT packages
       apt:
         pkg:
@@ -41,6 +36,9 @@
         - pcscd
         - python-dev
         - pass
+
+    - name: Install oh-my-zsh
+      shell: "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
 
     - name: Config oh-my-zsh theme
       replace:
