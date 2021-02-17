@@ -137,7 +137,7 @@
           insertafter: 'enable-ssh-support'
           line: 'pinentry-program /usr/bin/pinentry-tty'
 
-           
+
     - name: Yubikey SSH config for bash shell
       blockinfile:
         path: "/home/{{ user }}/.bashrc"
@@ -194,7 +194,7 @@
           mode: "0644"
           insertafter: BOF
           line: 'set-option -g mouse on'
-         
+
     - name: Create udev rule to auto-detect Yubikey insertion
       block:
         - template:
@@ -213,3 +213,9 @@
           creates: /home/{{ user }}/.emacs.d
       become: yes
       become_user: "{{ user }}"
+
+    - name: Shrink massive GNOME titlebars to sane values
+      template:
+        src: templates/gtk.css
+        dest: /home/{{ user }}/.config/gtk-3.0/gtk.css
+        mode: "0644"

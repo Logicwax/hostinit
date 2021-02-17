@@ -1,0 +1,30 @@
+headerbar.default-decoration {
+    min-height: 18px;
+    margin: 0px 0px 0px 0px;
+    padding: 2px 2px 2px 2px;
+}
+
+headerbar.default-decoration button.titlebutton {
+    min-height: 16px;
+    min-width: 16px;
+    margin: 0px 0px 0px 0px;
+    padding: 2px 2px 2px 2px;
+}
+
+headerbar  {
+    min-height: 18px;
+    margin: 0px 0px 0px 0px;
+    padding: 2px 2px 2px 2px;
+}
+
+headerbar entry, headerbar spinbutton, headerbar button, headerbar switch, headerbar separator {
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 0px;
+}
+
+headerbar button.titlebutton.minimize, headerbar button.titlebutton.maximize, headerbar button.titlebutton.close {
+    min-height: 16px;
+    min-width: 16px;
+    margin: 0px 0px 0px 0px;
+    padding: 2px 2px 2px 2px;
+}
