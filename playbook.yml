@@ -219,3 +219,26 @@
         src: templates/gtk.css
         dest: /home/{{ user }}/.config/gtk-3.0/gtk.css
         mode: "0644"
+
+    - name: Install decent fonts
+      block:
+      - name: Creates directory
+        file:
+          path: /home/{{ user }}/.fonts/
+          state: directory
+          owner: "{{ user }}"
+          group: "{{ user }}"
+          mode: "0644"
+          recurse: yes
+      - ansible.builtin.git:
+          repo: 'https://github.com/hbin/top-programming-fonts.git'
+          dest: /home/{{ user }}/.fonts/top-programming-fonts
+          version: master
+      - ansible.builtin.git:
+          repo: 'https://github.com/supercomputra/SF-Mono-Font.git'
+          dest: /home/{{ user }}/.fonts/SF-Mono-Font
+          version: master
+      - shell: |
+          cp /home/{{ user }}/.fonts/top-programming-fonts/*.ttf /home/{{ user }}/.fonts/
+          cp /home/{{ user }}/.fonts/SF-Mono-Font/*.otf /home/{{ user }}/.fonts/
+          fc-cache -rv
