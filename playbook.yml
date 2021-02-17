@@ -228,7 +228,7 @@
           state: directory
           owner: "{{ user }}"
           group: "{{ user }}"
-          mode: "0644"
+          mode: "0744"
           recurse: yes
       - ansible.builtin.git:
           repo: 'https://github.com/hbin/top-programming-fonts.git'
@@ -240,5 +240,10 @@
           version: master
       - shell: |
           cp /home/{{ user }}/.fonts/top-programming-fonts/*.ttf /home/{{ user }}/.fonts/
+          cp /home/{{ user }}/.fonts/top-programming-fonts/Hack/*.ttf /home/{{ user }}/.fonts/
+          rm -rf /home/{{ user }}/.fonts/top-programming-fonts
           cp /home/{{ user }}/.fonts/SF-Mono-Font/*.otf /home/{{ user }}/.fonts/
+          rm -rf /home/{{ user }}/.fonts/SF-Mono-Font
           fc-cache -rv
+      become: yes
+      become_user: "{{ user }}"
