@@ -24,6 +24,7 @@
         - ncdu
         - openssh-server
         - pass
+        - qtpass
         - pcscd
         - pgpdump
         - pinentry-tty
@@ -137,6 +138,12 @@
           insertafter: 'enable-ssh-support'
           line: 'pinentry-program /usr/bin/pinentry-tty'
 
+    - name: Fix QtPass to honor SSH_AUTH_SOCK
+      lineinfile:
+        dest: /usr/share/applications/qtpass.desktop
+        state: present
+        regexp: '^Exec.*'
+        line: 'Exec=sh -c "SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) qtpass"'
 
     - name: Yubikey SSH config for bash shell
       blockinfile:
