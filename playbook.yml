@@ -176,7 +176,7 @@
         path: "/home/{{ user }}/.gitconfig"
         block: |
           [remote "origin"]
-	          fetch = +refs/pull/*/head:refs/remotes/origin/refs/pull/*/head
+              fetch = +refs/pull/*/head:refs/remotes/origin/refs/pull/*/head
 
     - name: Yubikey SSH config for z-shell
       blockinfile:
