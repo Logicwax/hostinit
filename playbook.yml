@@ -29,7 +29,7 @@
         - pgpdump
         - pinentry-tty
         - powerline
-        - python-dev
+        - python-dev-is-python3
         - rsync
         - scdaemon
         - strace
