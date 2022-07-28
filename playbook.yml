@@ -163,13 +163,25 @@
           gpg-connect-agent updatestartuptty /bye > /dev/null
 
     - name: SSH github tweak (persistant connection)
-      blockinfile:
-        path: "/home/{{ user }}/.ssh/config"
-        block: |
-          Host github.com
-            ControlMaster auto
-            ControlPath /run/user/%i/ssh-%r@%h:%p
-            ControlPersist 3s
+      block:
+      - name: Creates directory
+        file:
+          path: /home/{{ user }}/.ssh/
+          state: directory
+          owner: "{{ user }}"
+          group: "{{ user }}"
+          mode: "0744"
+          recurse: yes
+      - blockinfile:
+          path: "/home/{{ user }}/.ssh/config"
+          create: yes
+          owner: "{{ user }}"
+          group: "{{ user }}"
+          block: |
+            Host github.com
+              ControlMaster auto
+              ControlPath /run/user/%i/ssh-%r@%h:%p
+              ControlPersist 3s
 
     - name: git tweak (Add pull requests to your remote refs)
       blockinfile:
