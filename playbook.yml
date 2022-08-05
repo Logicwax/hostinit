@@ -74,21 +74,26 @@
       become: yes
       become_user: "{{ user }}"
 
-    - name: Assign root write-only ownership
-      file:
-        path: /etc/security/authorized_keys
-        state: touch
-        owner: root
-        group: root
-        mode: "0644"
-
     - name: Install SSH key
-      authorized_key:
-        user: "{{ user }}"
-        state: present
-        key: "{{ ssh_key_url }}"
-        path: /etc/security/authorized_keys
-        manage_dir: False
+      block:
+      - file:
+          path: /etc/security/authorized_keys
+          state: touch
+          owner: root
+          group: root
+          mode: "0644"
+      - authorized_key:
+          user: "{{ user }}"
+          state: present
+          key: "{{ ssh_key_url }}"
+          path: /etc/security/authorized_keys
+          manage_dir: False
+      - file:
+          path: /etc/security/authorized_keys
+          state: touch
+          owner: root
+          group: root
+          mode: "0644"
 
     - name: Configure SSHd to use authorized_keys
       lineinfile:
@@ -181,7 +186,7 @@
             Host github.com
               ControlMaster auto
               ControlPath /run/user/%i/ssh-%r@%h:%p
-              ControlPersist 3s
+              ControlPersist 120s
 
     - name: git tweak (Add pull requests to your remote refs)
       blockinfile:
