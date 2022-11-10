@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all ansible
 
 SSH_KEY_URL="https://github.com/logicwax.keys"
 
@@ -8,7 +8,7 @@ K := $(foreach exec,$(EXECUTABLES),\
 
 SHELL=/bin/bash
 
-default: yubikey
+default: ansible
 
-yubikey:
+ansible:
 	sudo ansible-playbook --extra-vars user=$(USER) --extra-vars ssh_key_url=$(SSH_KEY_URL) --connection=local playbook.yml
