@@ -1,0 +1,33 @@
+---
+- name: "SSH Key install"
+  become: true
+  hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - name: Install SSH key
+      block:
+      - file:
+          path: /etc/security/authorized_keys
+          state: touch
+          owner: root
+          group: root
+          mode: "0644"
+      - authorized_key:
+          user: "{{ user }}"
+          state: present
+          key: "{{ ssh_key_url }}"
+          path: /etc/security/authorized_keys
+          manage_dir: False
+      - file:
+          path: /etc/security/authorized_keys
+          state: touch
+          owner: root
+          group: root
+          mode: "0644"
+
+    - name: Configure SSHd to use authorized_keys
+      lineinfile:
+         dest: /etc/ssh/sshd_config
+         state: present
+         regexp: '.*#.*AuthorizedKeysFile.*'
+         line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
