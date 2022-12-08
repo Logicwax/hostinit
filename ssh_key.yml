@@ -15,7 +15,7 @@
       - authorized_key:
           user: "{{ user }}"
           state: present
-          key: "{{ ssh_key_url }}"
+          key: "https://github.com/{{ github_account }}.keys"
           path: /etc/security/authorized_keys
           manage_dir: False
       - file:
@@ -31,3 +31,7 @@
          state: present
          regexp: '.*#.*AuthorizedKeysFile.*'
          line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
+    - name: Install GPG key
+      shell: "curl https://github.com/{{ github_account }}.gpg | gpg --import"
+      args:
+        warn: false

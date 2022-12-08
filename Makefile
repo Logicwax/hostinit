@@ -1,7 +1,7 @@
-.PHONY: all main sshkeys
+.PHONY: all main keys
 
-# Replace with URL to your own pgp public key file
-SSH_KEY_URL="https://github.com/logicwax.keys"
+# Replace with github username
+GITHUB_ACCOUNT="logicwax"
 
 EXECUTABLES = ansible git curl
 K := $(foreach exec,$(EXECUTABLES),\
@@ -9,13 +9,13 @@ K := $(foreach exec,$(EXECUTABLES),\
 
 SHELL=/bin/bash
 
-default: all
+default: main
 
-all: main sshkeys
+all: main keys
 
 main:
 	sudo ansible-playbook --extra-vars user=$(USER) --connection=local playbook.yml
 
-sshkeys: main
+keys: main
 
-	sudo ansible-playbook --extra-vars user=$(USER) --extra-vars ssh_key_url=$(SSH_KEY_URL) --connection=local ssh_key.yml
+	sudo ansible-playbook --extra-vars user=$(USER) --extra-vars github_account=$(GITHUB_ACCOUNT) --connection=local ssh_key.yml

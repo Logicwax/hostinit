@@ -9,6 +9,7 @@
       apt:
         pkg:
         - ccze
+        - curl
         - emacs
         - fonts-powerline
         - gnupg2
@@ -33,8 +34,10 @@
         - rsync
         - scdaemon
         - strace
+        - tig
         - u2f-host
         - yubikey-personalization
+        - vim
         - zsh
         - zsh-autosuggestions
         - zsh-syntax-highlighting
@@ -304,5 +307,14 @@
           cp /home/{{ user }}/.fonts/SF-Mono-Font/*.otf /home/{{ user }}/.fonts/
           rm -rf /home/{{ user }}/.fonts/SF-Mono-Font
           fc-cache -rv
+      become: yes
+      become_user: "{{ user }}"
+
+    - name: Install emacs config
+      block:
+      - ansible.builtin.git:
+          repo: 'https://github.com/logicwax/emacsconfig.git'
+          dest: /home/{{ user }}/.emacs.d
+          version: master
       become: yes
       become_user: "{{ user }}"

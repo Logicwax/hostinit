@@ -1,15 +1,19 @@
 # hostinit
-Sets up a new Linux system Yubikey SSH/sudo/gpg support and some other bells and whistles
+Sets up a new Linux ubuntu/debian-based system with nice Z-shell defaults and Yubikey SSH/sudo/gpg support and some other bells and whistles.
 
 
 Requirements
 ------------
 `sudo apt-get install ansible curl make`
 
-Installation
+Default Installation
 ------------
 
-1) Edit `Makefile` and replace `SSH_KEY_URL="https://github.com/logicwax.keys"` with the URL to your gpg key (replace github username should be good enough if you've updated your github account with your gpg key)
+1) Run `make`
 
-2) run `make`
+Install with SSH/PGP keys
+------------
 
+1) If you wish to have ssh and pgp keys automatically installed, edit `Makefile` and replace `GITHUB_ACCOUNT="logicwax"` with your github account name (provided your pgp and ssh keys are already setup in your account already).
+
+2) Run `make keys` (performs default installation as well)
