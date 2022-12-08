@@ -51,11 +51,17 @@
 
     - name: Config oh-my-zsh theme
       block:
-      - shell: "cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc || true"
+      - shell: |
+          test -f /home/{{ user }}/.zshrc && mv -f /home/{{ user }}/.zshrc /home/{{ user }}/.zshrc.bak
+          cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc || true
       - replace:
           path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
           regexp: '(?P<dirprompt>^\s+prompt_segment) blue \$CURRENT_FG'
           replace: '\g<dirprompt> 089 $CURRENT_FG'
+      - replace:
+          path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
+          regexp: '(?P<dirprompt>^\s+prompt_segment black default) .*'
+          replace: '\g<dirprompt> "%(!.%{{ "{" }}%F{{ "{" }}yellow{{ "}" }}%{{ "}" }}.)%F{{ "{" }}magenta{{ "}" }}%n%F{{ "{" }}cyan{{ "}" }}@%f%F{{ "{" }}green{{ "}" }}%m%f% "'
       - lineinfile:
           dest: /home/{{ user }}/.zshrc
           state: present
@@ -229,7 +235,7 @@
           gpg-connect-agent updatestartuptty /bye > /dev/null
           alias yubireset="rm -rfv ~/.gnupg/private-keys-v1.d && sudo killall -q -s 9 gpg-agent ssh-agent scdaemon || true && rm -f '~/.gnupg/*.lock' && source ~/.zshrc && gpg --card-status"
           alias ll="ls -alhF"
-          alias emacs="emacs -nw
+          alias emacs="emacs -nw"
 
     - name: Some one-offs
       block:
