@@ -92,12 +92,6 @@
           owner: root
           group: root
           mode: "0644"
-      - file:
-          path: /etc/security/authorized_keys
-          state: touch
-          owner: root
-          group: root
-          mode: "0644"
 
     - name: Configure SSHd to use authorized_keys
       lineinfile:
