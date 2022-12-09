@@ -166,6 +166,7 @@
           gpg-connect-agent updatestartuptty /bye > /dev/null
           export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+          export PATH=$HOME/.local/bin:$PATH
 
     - name: SSH github tweak (persistant connection)
       block:
@@ -186,9 +187,9 @@
             Host github.com
               ControlMaster auto
               ControlPath /run/user/%i/ssh-%r@%h:%p
-              ControlPersist 120s
+              ControlPersist 300s
 
-    - name: git tweak (Add pull requests to your remote refs)
+    - name: git tweaks
       blockinfile:
         path: "/home/{{ user }}/.gitconfig"
         create: yes
@@ -238,6 +239,7 @@
           alias emacs="emacs -nw"
           export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+          export PATH=$HOME/.local/bin:$PATH
 
     - name: Some one-offs
       block:
@@ -318,11 +320,13 @@
       become: yes
       become_user: "{{ user }}"
 
-    - name: Install nvm
+    - name: install latest nodejs (temporarily for vim plugins)
       block:
-      - shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
-        args:
-          warn: false
+      - apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+      - apt_repository:
+          repo: 'deb http://deb.nodesource.com/node_16.x {{ ansible_distribution_release }} main'
+          update_cache: yes
+      - apt: name=nodejs
 
     - name: Install vim config
       block:
@@ -340,6 +344,18 @@
           insertafter: BOF
           line: 'runtime vimrc'
       - shell: "echo q | vim +PluginInstall +qall || true"
-#      - shell: cd /home/{{ user }}/.vim && ./install_deps.sh
+      - shell: cd /home/{{ user }}/.vim && ./install_deps.sh
       become: yes
       become_user: "{{ user }}"
+
+    - name: Remove deb node, replace with nvm
+      apt:
+        state: absent
+        pkg:
+        - nodejs
+
+    - name: Install nvm
+      block:
+      - shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
+        args:
+          warn: false
