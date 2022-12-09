@@ -343,6 +343,26 @@
           mode: "0644"
           insertafter: BOF
           line: 'runtime vimrc'
+      - replace:
+          path: /home/{{ user }}/.vim/vimrc
+          regexp: '^nmap <Left> <<'
+          replace: 'nmap h <<'
+      - replace:
+          path: /home/{{ user }}/.vim/vimrc
+          regexp: '^nmap <Right> >>'
+          replace: 'nmap l >>'
+      - replace:
+          path: /home/{{ user }}/.vim/vimrc
+          regexp: '^nmap <Up> \[e'
+          replace: 'nmap k {{ "[" }}e'
+      - replace:
+          path: /home/{{ user }}/.vim/vimrc
+          regexp: '^nmap <Down> \]e'
+          replace: 'nmap j {{ "]" }}e'
+      - replace:
+          path: /home/{{ user }}/.vim/vimrc
+          regexp: '^let g:solarized_contrast="high"'
+          replace: 'let g:solarized_contrast="low"'
       - shell: "echo q | vim +PluginInstall +qall || true"
       - shell: cd /home/{{ user }}/.vim && ./install_deps.sh
       become: yes
