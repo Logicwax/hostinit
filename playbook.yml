@@ -219,6 +219,9 @@
               ui = auto
           [remote "origin"]
               fetch = +refs/pull/*/head:refs/remotes/origin/refs/pull/*/head
+          [push]
+              autoSetupRemote = true
+              default = current
 
     - name: Config for z-shell
       blockinfile:
