@@ -58,14 +58,6 @@
       - shell: |
           test -f /home/{{ user }}/.zshrc && mv -f /home/{{ user }}/.zshrc /home/{{ user }}/.zshrc.bak
           cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc || true
-      - replace:
-          path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
-          regexp: '(?P<dirprompt>^\s+prompt_segment) blue \$CURRENT_FG'
-          replace: '\g<dirprompt> 089 $CURRENT_FG'
-      - replace:
-          path: /home/{{ user }}/.oh-my-zsh/themes/agnoster.zsh-theme
-          regexp: '(?P<dirprompt>^\s+prompt_segment black default) .*'
-          replace: '\g<dirprompt> "%(!.%{{ "{" }}%F{{ "{" }}yellow{{ "}" }}%{{ "}" }}.)%F{{ "{" }}magenta{{ "}" }}%n%F{{ "{" }}cyan{{ "}" }}@%f%F{{ "{" }}green{{ "}" }}%m%f% "'
       - lineinfile:
           dest: /home/{{ user }}/.zshrc
           state: present
@@ -250,6 +242,15 @@
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
           export PATH=$HOME/.local/bin:$PATH
           mem() { ps aux | awk '{mem[$11]+=int($6/1024)}; END {for (i in mem) {print mem[i]" MB ",i}}' | grep $1 }
+          # Change command prompt colors / appearance
+          prompt_context() {
+            if [[ "$USERNAME" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+              prompt_segment black default "%(!.%{{ "{" }}%F{{ "{" }}yellow{{ "}" }}%{{ "}" }}.)%F{{ "{" }}magenta{{ "}" }}%n%F{{ "{" }}cyan{{ "}" }}@%f%F{{ "{" }}green{{ "}" }}%m%f% "
+            fi
+          }
+          prompt_dir() {
+            prompt_segment 089 $CURRENT_FG '%~'
+          }
 
     - name: Some one-offs
       block:
