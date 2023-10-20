@@ -230,9 +230,7 @@
             pkill -x -INT gpg-agent > /dev/null 2>&1
             gpg-agent --daemon --enable-ssh-support > $envfile
           fi
-          if [[ ! -v SSH_AUTH_SOCK ]]; then
-            export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
-          fi
+          export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
           export GPG_TTY=$(tty)
           gpg-connect-agent updatestartuptty /bye > /dev/null
           alias yubireset="rm -rfv ~/.gnupg/private-keys-v1.d && sudo killall -q -s 9 gpg-agent ssh-agent scdaemon pcscd || true && rm -f '~/.gnupg/*.lock' && source ~/.zshrc && gpg --card-status && export SSH_AUTH_SOCK='$(gpgconf --list-dirs agent-ssh-socket)'"
