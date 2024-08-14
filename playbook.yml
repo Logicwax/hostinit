@@ -10,19 +10,17 @@
         pkg:
         - ccze
         - curl
-        - emacs
+        - emacs-nox
         - exuberant-ctags
         - fonts-powerline
         - gnupg2
         - gnutls-bin
         - gpgv
-        - gpgv2
         - htop
         - keyutils
         - libccid
         - libpam-ssh-agent-auth
         - libpcsclite1
-        - monkeysphere
         - ncdu
         - openssh-server
         - pass
@@ -87,10 +85,10 @@
 
     - name: Configure SSHd to use authorized_keys
       lineinfile:
-         dest: /etc/ssh/sshd_config
-         state: present
-         regexp: '.*#.*AuthorizedKeysFile.*'
-         line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
+          dest: /etc/ssh/sshd_config
+          state: present
+          regexp: '.*#.*AuthorizedKeysFile.*'
+          line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
 
     - name: SUDO Yubikey Auth
       block:
@@ -270,13 +268,13 @@
     - name: Create udev rule to auto-detect Yubikey insertion
       block:
         - template:
-           src: templates/insert-yubi.sh
-           dest: /usr/local/bin/
-           mode: "0744"
+            src: templates/insert-yubi.sh
+            dest: /usr/local/bin/
+            mode: "0744"
         - template:
-           src: templates/69.yubikey.rules
-           dest: /etc/udev/rules.d/
-           mode: "0644"
+            src: templates/69.yubikey.rules
+            dest: /etc/udev/rules.d/
+            mode: "0644"
         - shell: "udevadm control -R"
 
     - name: Install emacs config
@@ -331,9 +329,9 @@
 
     - name: install latest nodejs (temporarily for vim plugins)
       block:
-      - apt_key: url=https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+      - apt_key: url=https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
       - apt_repository:
-          repo: 'deb http://deb.nodesource.com/node_16.x {{ ansible_distribution_release }} main'
+          repo: 'deb http://deb.nodesource.com/node_18.x nodistro main'
           update_cache: yes
       - apt: name=nodejs
 
@@ -385,6 +383,4 @@
 
     - name: Install nvm
       block:
-      - shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
-        args:
-          warn: false
+      - shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
