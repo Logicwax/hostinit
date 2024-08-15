@@ -4,7 +4,6 @@
   hosts: 127.0.0.1
   connection: local
   tasks:
-
     - name: Install APT packages
       apt:
         pkg:
@@ -21,6 +20,7 @@
         - libccid
         - libpam-ssh-agent-auth
         - libpcsclite1
+        - locate
         - ncdu
         - openssh-server
         - pass
@@ -316,6 +316,14 @@
           rm -rf /home/{{ user }}/.fonts/SF-Mono-Font
           fc-cache -rv
       become: yes
+      become_user: "{{ user }}"
+
+    - name: Customize terminal
+      block:
+      - shell: |
+          dbus-run-session -- bash -c 'dconf load /org/gnome/terminal/legacy/profiles:/ < templates/gnome-terminal-profiles.dconf'
+        args:
+          chdir: "{{ playbook_dir }}"
       become_user: "{{ user }}"
 
     - name: Install emacs config
