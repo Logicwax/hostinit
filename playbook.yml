@@ -318,10 +318,18 @@
       become: yes
       become_user: "{{ user }}"
 
-    - name: Customize terminal
+    - name: Customize interface
       block:
       - shell: |
           dbus-run-session -- bash -c 'dconf load /org/gnome/terminal/legacy/profiles:/ < templates/gnome-terminal-profiles.dconf'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/peripherals/touchpad/natural-scroll false'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-show-seconds true'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-format \"'12h'\"'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-show-date true'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/show-battery-percentage true'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/datetime/automatic-timezone true'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/shell/extensions/dash-to-dock/dock-position BOTTOM'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/shell/extensions/dash-to-dock/extend-height false'
         args:
           chdir: "{{ playbook_dir }}"
       become_user: "{{ user }}"
