@@ -9,13 +9,13 @@ K := $(foreach exec,$(EXECUTABLES),\
 
 SHELL=/bin/bash
 
-default: main
+default: all
 
 all: main keys
 
 main:
 	sudo ansible-playbook --extra-vars user=$(USER) --connection=local playbook.yml
 
-keys: main
+keys:
 
 	sudo ansible-playbook --extra-vars user=$(USER) --extra-vars github_account=$(GITHUB_ACCOUNT) --connection=local ssh_key.yml

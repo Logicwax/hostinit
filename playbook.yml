@@ -11,6 +11,7 @@
         - curl
         - emacs-nox
         - exuberant-ctags
+        - fonts-open-sans
         - fonts-powerline
         - gnupg2
         - gnutls-bin
@@ -24,6 +25,7 @@
         - ncdu
         - openssh-server
         - pass
+        - pass-extension-otp
         - qtpass
         - pcscd
         - pgpdump
@@ -37,6 +39,7 @@
         - u2f-host
         - yubikey-personalization
         - vim
+        - webext-browserpass
         - zsh
         - zsh-autosuggestions
         - zsh-syntax-highlighting
@@ -130,6 +133,11 @@
           state: present
           insertafter: 'enable-ssh-support'
           line: 'pinentry-program /usr/bin/pinentry-tty'
+      - lineinfile:
+          dest: /home/{{ user }}/.gnupg/gpg-agent.conf
+          state: present
+          insertafter: 'pinentry-program /usr/bin/pinentry-tty'
+          line: 'pinentry-program /usr/bin/pinentry'
 
     - name: Fix QtPass to honor SSH_AUTH_SOCK
       lineinfile:
@@ -400,3 +408,13 @@
     - name: Install nvm
       block:
       - shell: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+
+    - name: Fix browserpass for chrome
+      block:
+      - shell: |
+        mkdir -p /etc/opt/chrome/native-messaging-hosts/
+        ln -s /etc/chromium/native-messaging-hosts/com.github.browserpass.native.json /etc/opt/chrome/native-messaging-hosts/com.github.browserpass.native.json
+      - template:
+        src: templates/QtPass.conf
+        dest: /home/{{ user }}/.config/IJHack/QtPass.conf
+        mode: "0644"

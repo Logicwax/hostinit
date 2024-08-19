@@ -31,7 +31,8 @@
          state: present
          regexp: '.*#.*AuthorizedKeysFile.*'
          line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
+
     - name: Install GPG key
       shell: "curl https://github.com/{{ github_account }}.gpg | gpg --import"
-      args:
-        warn: false
+      become: yes
+      become_user: "{{ user }}"
