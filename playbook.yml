@@ -412,9 +412,9 @@
     - name: Fix browserpass for chrome
       block:
       - shell: |
-        mkdir -p /etc/opt/chrome/native-messaging-hosts/
-        ln -s /etc/chromium/native-messaging-hosts/com.github.browserpass.native.json /etc/opt/chrome/native-messaging-hosts/com.github.browserpass.native.json
+          mkdir -p /etc/opt/chrome/native-messaging-hosts/
+          ln -s /etc/chromium/native-messaging-hosts/com.github.browserpass.native.json /etc/opt/chrome/native-messaging-hosts/com.github.browserpass.native.json
       - template:
-        src: templates/QtPass.conf
-        dest: /home/{{ user }}/.config/IJHack/QtPass.conf
-        mode: "0644"
+          src: templates/QtPass.conf
+          dest: /home/{{ user }}/.config/IJHack/QtPass.conf
+          mode: "0644"
