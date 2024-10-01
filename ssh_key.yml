@@ -27,10 +27,10 @@
 
     - name: Configure SSHd to use authorized_keys
       lineinfile:
-         dest: /etc/ssh/sshd_config
-         state: present
-         regexp: '.*#.*AuthorizedKeysFile.*'
-         line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
+        dest: /etc/ssh/sshd_config
+        state: present
+        regexp: '.*#.*AuthorizedKeysFile.*'
+        line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
 
     - name: Install GPG key
       shell: |
