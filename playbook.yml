@@ -413,7 +413,14 @@
       block:
       - shell: |
           mkdir -p /etc/opt/chrome/native-messaging-hosts/
+          rm -f /etc/opt/chrome/native-messaging-hosts/com.github.browserpass.native.json
           ln -s /etc/chromium/native-messaging-hosts/com.github.browserpass.native.json /etc/opt/chrome/native-messaging-hosts/com.github.browserpass.native.json
+      - file:
+          path: /home/{{ user }}/.config/IJHack
+          state: directory
+          owner: "{{ user }}"
+          group: "{{ user }}"
+          mode: '0775'
       - template:
           src: templates/QtPass.conf
           dest: /home/{{ user }}/.config/IJHack/QtPass.conf
