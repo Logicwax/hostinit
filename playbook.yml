@@ -354,10 +354,9 @@
 
     - name: install latest nodejs (temporarily for vim plugins)
       block:
-      - apt_key: url=https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
-      - apt_repository:
-          repo: 'deb http://deb.nodesource.com/node_18.x nodistro main'
-          update_cache: yes
+      - shell: |
+          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key > /etc/apt/trusted.gpg.d/nodesource.asc
+          echo "deb https://deb.nodesource.com/node_18.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
       - apt: name=nodejs
 
     - name: Install vim config
@@ -401,10 +400,12 @@
       become_user: "{{ user }}"
 
     - name: Remove deb node, replace with nvm
-      apt:
-        state: absent
-        pkg:
-        - nodejs
+      block:
+      - shell: rm /etc/apt/sources.list.d/nodesource.list
+      - apt:
+          state: absent
+          pkg:
+          - nodejs
 
     - name: Install nvm
       block:
