@@ -4,6 +4,10 @@
   hosts: 127.0.0.1
   connection: local
   tasks:
+    - name: Install APT packages
+      apt:
+        pkg:
+        - openssh-server
     - name: Install SSH key
       block:
       - file:
