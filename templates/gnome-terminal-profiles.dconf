@@ -1,8 +1,8 @@
 [:b1dcc9dd-5262-4d8d-a863-c897e6d979b9]
 background-transparency-percent=4
 font='Hack 12'
-default-size-columns=190
-default-size-rows=50
+default-size-columns=170
+default-size-rows=45
 scrollback-lines=20000
 use-system-font=false
 use-theme-transparency=false
