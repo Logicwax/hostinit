@@ -420,6 +420,20 @@
       become: yes
       become_user: "{{ user }}"
 
+    - name: Install latest Chrome
+      block:
+        - shell: |
+            wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            dpkg -i google-chrome-stable_current_amd64.deb
+            rm -f google-chrome-stable_current_amd64.deb
+            cp /usr/share/applications/google-chrome.desktop /home/{{ user }}/.local/share/applications/
+            sed -i '/^Exec=\/usr\/bin\/google-chrome-stable %U/ s|$| --enable-features=TouchpadOverscrollHistoryNavigation|' /home/{{ user }}/.local/share/applications/google-chrome.desktop
+        - file:
+            path: /home/{{ user }}/.local/share/applications/google-chrome.desktop
+            owner: "{{ user }}"
+            group: "{{ user }}"
+      become: yes
+
     - name: Fix browserpass for chrome
       block:
       - shell: |
@@ -436,3 +450,4 @@
           src: templates/QtPass.conf
           dest: /home/{{ user }}/.config/IJHack/QtPass.conf
           mode: "0644"
+
