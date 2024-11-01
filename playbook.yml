@@ -344,6 +344,8 @@
           dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/datetime/automatic-timezone true'
           dbus-run-session -- bash -c 'dconf write /org/gnome/shell/extensions/dash-to-dock/dock-position \"'BOTTOM'\"'
           dbus-run-session -- bash -c 'dconf write /org/gnome/shell/extensions/dash-to-dock/extend-height false'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/settings-daemon/plugins/media-keys/terminal "[\"<Super>t\"]"'
+          dbus-run-session -- bash -c 'dconf write /org/gnome/settings-daemon/plugins/media-keys/home "[\"<Super>e\"]"'
         args:
           chdir: "{{ playbook_dir }}"
       become_user: "{{ user }}"
