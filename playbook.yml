@@ -13,6 +13,9 @@
         - exuberant-ctags
         - fonts-open-sans
         - fonts-powerline
+        - git-lfs
+        - gnome-browser-connector
+        - gnome-shell-extension
         - gnupg2
         - gnutls-bin
         - gpgv
@@ -26,20 +29,22 @@
         - openssh-server
         - pass
         - pass-extension-otp
-        - qtpass
         - pcscd
         - pgpdump
         - pinentry-tty
         - powerline
         - python-dev-is-python3
+        - qtpass
         - rsync
         - scdaemon
         - strace
         - tig
         - u2f-host
-        - yubikey-personalization
         - vim
         - webext-browserpass
+        - yubikey-manager
+        - yubikey-manager-qt
+        - yubikey-personalization
         - zsh
         - zsh-autosuggestions
         - zsh-syntax-highlighting
