@@ -41,13 +41,27 @@
         - tig
         - u2f-host
         - vim
-        - webext-browserpass
         - yubikey-manager
         - yubikey-manager-qt
         - yubikey-personalization
         - zsh
         - zsh-autosuggestions
         - zsh-syntax-highlighting
+
+    - name: Download the webext-browserpass package
+      ansible.builtin.get_url:
+        url: "http://launchpadlibrarian.net/683458122/webext-browserpass_3.7.2-1build2_amd64.deb"
+        dest: "/tmp/webext-browserpass_3.7.2-1build2_amd64.deb"
+
+    - name: Install the downloaded package
+      ansible.builtin.apt:
+        deb: "/tmp/webext-browserpass_3.7.2-1build2_amd64.deb"
+        state: present
+
+    - name: Clean up the downloaded .deb file
+      ansible.builtin.file:
+        path: "/tmp/webext-browserpass_3.7.2-1build2_amd64.deb"
+        state: absent
 
     - name: Install oh-my-zsh
       shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
