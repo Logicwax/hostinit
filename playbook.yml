@@ -187,7 +187,6 @@
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
           export PATH=$HOME/.local/bin:$PATH
           alias yubireset="rm -rfv ~/.gnupg/private-keys-v1.d && sudo killall -q -s 9 gpg-agent ssh-agent scdaemon pcscd || true && rm -f '~/.gnupg/*.lock' && source ~/.zshrc && gpg --card-status"
-          mem() { ps aux | awk '{mem[$11]+=int($6/1024)}; END {for (i in mem) {print mem[i]" MB ",i}}' | grep $1 }
 
     - name: SSH github tweak (persistant connection)
       block:
