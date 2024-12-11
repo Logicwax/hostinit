@@ -15,7 +15,7 @@
         - fonts-powerline
         - git-lfs
         - gnome-browser-connector
-        - gnome-shell-extension
+        - gnome-shell-extensions
         - gnupg2
         - gnutls-bin
         - gpgv
@@ -334,18 +334,20 @@
     - name: Customize interface
       block:
       - shell: |
-          dbus-run-session -- bash -c 'dconf load /org/gnome/terminal/legacy/profiles:/ < templates/gnome-terminal-profiles.dconf'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/peripherals/touchpad/natural-scroll false'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-show-seconds true'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-format \"'12h'\"'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-show-date true'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/clock-show-weekday true'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/interface/show-battery-percentage true'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/desktop/datetime/automatic-timezone true'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/shell/extensions/dash-to-dock/dock-position \"'BOTTOM'\"'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/shell/extensions/dash-to-dock/extend-height false'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/settings-daemon/plugins/media-keys/terminal "[\"<Super>t\"]"'
-          dbus-run-session -- bash -c 'dconf write /org/gnome/settings-daemon/plugins/media-keys/home "[\"<Super>e\"]"'
+          export DISPLAY=:0
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+          dconf load /org/gnome/terminal/legacy/profiles:/ < templates/gnome-terminal-profiles.dconf
+          dconf write /org/gnome/desktop/peripherals/touchpad/natural-scroll false
+          dconf write /org/gnome/desktop/interface/clock-show-seconds true
+          dconf write /org/gnome/desktop/interface/clock-format "'12h'"
+          dconf write /org/gnome/desktop/interface/clock-show-date true
+          dconf write /org/gnome/desktop/interface/clock-show-weekday true
+          dconf write /org/gnome/desktop/interface/show-battery-percentage true
+          dconf write /org/gnome/desktop/datetime/automatic-timezone true
+          dconf write /org/gnome/shell/extensions/dash-to-dock/dock-position "'BOTTOM'"
+          dconf write /org/gnome/shell/extensions/dash-to-dock/extend-height false
+          dconf write /org/gnome/settings-daemon/plugins/media-keys/terminal "['<Super>t']"
+          dconf write /org/gnome/settings-daemon/plugins/media-keys/home "['<Super>e']"
         args:
           chdir: "{{ playbook_dir }}"
       become_user: "{{ user }}"
