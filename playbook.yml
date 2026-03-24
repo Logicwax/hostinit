@@ -16,6 +16,7 @@
         - git-lfs
         - gnome-browser-connector
         - gnome-shell-extensions
+        - gnome-terminal
         - gnupg2
         - gnutls-bin
         - gpgv
