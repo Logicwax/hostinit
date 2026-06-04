@@ -304,13 +304,6 @@
             mode: "0644"
         - shell: "udevadm control -R"
 
-    - name: Install emacs config
-      shell: git clone  https://github.com/logicwax/emacsconfig.git /home/{{ user }}/.emacs.d
-      args:
-          creates: /home/{{ user }}/.emacs.d
-      become: yes
-      become_user: "{{ user }}"
-
     - name: Shrink massive GNOME titlebars to sane values
       template:
         src: templates/gtk.css
@@ -351,6 +344,7 @@
           export DISPLAY=:0
           export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
           dconf load /org/gnome/terminal/legacy/profiles:/ < templates/gnome-terminal-profiles.dconf
+          dconf load /org/gnome/Ptyxis/ < templates/ptyxis.dconf
           dconf write /org/gnome/desktop/peripherals/touchpad/natural-scroll false
           dconf write /org/gnome/desktop/interface/clock-show-seconds true
           dconf write /org/gnome/desktop/interface/clock-format "'12h'"
@@ -362,16 +356,27 @@
           dconf write /org/gnome/shell/extensions/dash-to-dock/extend-height false
           dconf write /org/gnome/settings-daemon/plugins/media-keys/terminal "['<Super>t']"
           dconf write /org/gnome/settings-daemon/plugins/media-keys/home "['<Super>e']"
+          if ! gsettings get org.gnome.shell favorite-apps | grep -q "org.gnome.Ptyxis.desktop"; then
+            gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | python3 -c "import sys,ast; l=ast.literal_eval(sys.stdin.read()); l.append('org.gnome.Ptyxis.desktop'); print(l)")"
+          fi
         args:
           chdir: "{{ playbook_dir }}"
       become_user: "{{ user }}"
 
-    - name: Install emacs config
-      block:
-      - ansible.builtin.git:
-          repo: 'https://github.com/logicwax/emacsconfig.git'
-          dest: /home/{{ user }}/.emacs.d
-          version: master
+    - name: Install emacs config (idempotent; survives editor-created ~/.emacs.d)
+      shell: |
+        set -e
+        dir=/home/{{ user }}/.emacs.d
+        repo=https://github.com/logicwax/emacsconfig.git
+        branch=master
+        mkdir -p "$dir"
+        git -C "$dir" rev-parse --git-dir >/dev/null 2>&1 || git -C "$dir" init -q
+        git -C "$dir" remote get-url origin >/dev/null 2>&1 \
+          && git -C "$dir" remote set-url origin "$repo" \
+          || git -C "$dir" remote add origin "$repo"
+        git -C "$dir" fetch -q origin "$branch"
+        git -C "$dir" checkout -q -f -B "$branch" "origin/$branch"
+        git -C "$dir" submodule update --init --recursive
       become: yes
       become_user: "{{ user }}"
 
@@ -379,15 +384,27 @@
       block:
       - shell: |
           curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key > /etc/apt/trusted.gpg.d/nodesource.asc
-          echo "deb https://deb.nodesource.com/node_18.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
-      - apt: name=nodejs
+          echo "deb https://deb.nodesource.com/node_24.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+      - apt:
+          name: nodejs
+          update_cache: yes
 
     - name: Install vim config
       block:
-      - ansible.builtin.git:
-          repo: 'https://github.com/drGrove/dotvim.git'
-          dest: /home/{{ user }}/.vim
-          version: master
+      - name: Clone vim config (idempotent; survives editor-created ~/.vim)
+        shell: |
+          set -e
+          dir=/home/{{ user }}/.vim
+          repo=https://github.com/drGrove/dotvim.git
+          branch=master
+          mkdir -p "$dir"
+          git -C "$dir" rev-parse --git-dir >/dev/null 2>&1 || git -C "$dir" init -q
+          git -C "$dir" remote get-url origin >/dev/null 2>&1 \
+            && git -C "$dir" remote set-url origin "$repo" \
+            || git -C "$dir" remote add origin "$repo"
+          git -C "$dir" fetch -q origin "$branch"
+          git -C "$dir" checkout -q -f -B "$branch" "origin/$branch"
+          git -C "$dir" submodule update --init --recursive
       - lineinfile:
           dest: /home/{{ user }}/.vimrc
           state: present
@@ -418,7 +435,7 @@
           regexp: '^let g:solarized_contrast="high"'
           replace: 'let g:solarized_contrast="low"'
       - shell: "echo q | vim +PluginInstall +qall || true"
-      - shell: cd /home/{{ user }}/.vim && ./install_deps.sh
+      - shell: cd /home/{{ user }}/.vim && PIP_BREAK_SYSTEM_PACKAGES=1 ./install_deps.sh || true
       become: yes
       become_user: "{{ user }}"
 

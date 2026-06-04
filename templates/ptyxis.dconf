@@ -1,0 +1,13 @@
+[/]
+default-profile-uuid='b1dcc9dd-5262-4d8d-a863-c897e6d979b9'
+profile-uuids=['b1dcc9dd-5262-4d8d-a863-c897e6d979b9']
+use-system-font=false
+font-name='Hack 12'
+default-columns=uint32 170
+default-rows=uint32 45
+restore-window-size=false
+
+[Profiles/b1dcc9dd-5262-4d8d-a863-c897e6d979b9]
+label='Default'
+opacity=0.96
+scrollback-lines=20000
