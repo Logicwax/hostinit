@@ -91,7 +91,6 @@
       shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
       args:
           creates: /home/{{ user }}/.oh-my-zsh
-      register: omz_install
       become: yes
       become_user: "{{ user }}"
 
@@ -100,11 +99,6 @@
 
     - name: Config oh-my-zsh theme
       block:
-      - name: Seed ~/.zshrc from the oh-my-zsh template (first install only; never clobbers an existing one)
-        shell: |
-          test -f /home/{{ user }}/.zshrc && mv -f /home/{{ user }}/.zshrc "/home/{{ user }}/.zshrc.$(date +%Y%m%d%H%M%S).bak"
-          cp /home/{{ user }}/.oh-my-zsh/templates/zshrc.zsh-template /home/{{ user }}/.zshrc || true
-        when: omz_install is changed
       - lineinfile:
           dest: /home/{{ user }}/.zshrc
           state: present
