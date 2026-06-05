@@ -4,6 +4,16 @@
   hosts: 127.0.0.1
   connection: local
   tasks:
+    - name: Detect whether this is a GNOME graphical system
+      ansible.builtin.command: which gnome-shell
+      register: gnome_check
+      changed_when: false
+      failed_when: false
+
+    - name: Set is_gnome fact (GUI-only tasks are skipped on headless/terminal hosts)
+      ansible.builtin.set_fact:
+        is_gnome: "{{ gnome_check.rc == 0 }}"
+
     - name: Install APT packages
       apt:
         pkg:
@@ -15,11 +25,6 @@
         - fonts-open-sans
         - fonts-powerline
         - git-lfs
-        - gnome-browser-connector
-        - gnome-shell-extension-manager
-        - gnome-shell-extensions
-        - gnome-terminal
-        - gnome-tweaks
         - gnupg2
         - gnutls-bin
         - gpgv
@@ -54,17 +59,30 @@
         - zsh-autosuggestions
         - zsh-syntax-highlighting
 
+    - name: Install GNOME desktop APT packages
+      when: is_gnome
+      apt:
+        pkg:
+        - gnome-browser-connector
+        - gnome-shell-extension-manager
+        - gnome-shell-extensions
+        - gnome-terminal
+        - gnome-tweaks
+
     - name: Download the webext-browserpass package
+      when: is_gnome
       ansible.builtin.get_url:
         url: "http://launchpadlibrarian.net/683458122/webext-browserpass_3.7.2-1build2_amd64.deb"
         dest: "/tmp/webext-browserpass_3.7.2-1build2_amd64.deb"
 
     - name: Install the downloaded package
+      when: is_gnome
       ansible.builtin.apt:
         deb: "/tmp/webext-browserpass_3.7.2-1build2_amd64.deb"
         state: present
 
     - name: Clean up the downloaded .deb file
+      when: is_gnome
       ansible.builtin.file:
         path: "/tmp/webext-browserpass_3.7.2-1build2_amd64.deb"
         state: absent
@@ -215,12 +233,6 @@
         owner: "{{ user }}"
         group: "{{ user }}"
         block: |
-          #[user]
-          #  email = Logicwax@gmail.com
-          #  name = Matthew Brooks
-          #  signingKey = 30B0BFDBA72CDEB3E7ADBE842BDE9CDB6D0FAD15  #get from `gpg --list-keys`
-          #[commit]
-          #  gpgSign = true
           [gpg]
               program = gpg
           [filter "lfs"]
@@ -239,6 +251,43 @@
           [push]
               autoSetupRemote = true
               default = current
+
+    - name: Check whether git identity is already set in ~/.gitconfig
+      shell: git config -f /home/{{ user }}/.gitconfig --get user.email
+      register: git_identity
+      changed_when: false
+      failed_when: false
+      become: yes
+      become_user: "{{ user }}"
+
+    - name: Set git identity constants for logicwax (only if not already set; never clobber)
+      shell: |
+        gc="git config -f /home/{{ user }}/.gitconfig"
+        $gc --get user.email      >/dev/null 2>&1 || $gc user.email      "Logicwax@gmail.com"
+        $gc --get user.name       >/dev/null 2>&1 || $gc user.name       "Matthew Brooks"
+        $gc --get user.signingKey >/dev/null 2>&1 || $gc user.signingKey "30B0BFDBA72CDEB3E7ADBE842BDE9CDB6D0FAD15"
+        $gc --get commit.gpgSign  >/dev/null 2>&1 || $gc commit.gpgSign  "true"
+      become: yes
+      become_user: "{{ user }}"
+      when: user == "logicwax"
+
+    - name: Add commented git identity template (other users, only if unset)
+      blockinfile:
+        path: "/home/{{ user }}/.gitconfig"
+        create: yes
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        marker: "# {mark} GIT IDENTITY TEMPLATE"
+        block: |
+          #[user]
+          #  email = name@domain.com
+          #  name = FirstName LastName
+          #  signingKey = DEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF  #get from `gpg --list-keys`
+          #[commit]
+          #  gpgSign = true
+      when:
+        - user != "logicwax"
+        - git_identity.rc != 0
 
     - name: Config for z-shell
       blockinfile:
@@ -303,6 +352,7 @@
         - shell: "udevadm control -R"
 
     - name: Shrink massive GNOME titlebars to sane values
+      when: is_gnome
       template:
         src: templates/gtk.css
         dest: /home/{{ user }}/.config/gtk-3.0/gtk.css
@@ -337,6 +387,7 @@
       become_user: "{{ user }}"
 
     - name: Customize interface
+      when: is_gnome
       block:
       - shell: |
           export DISPLAY=:0
@@ -364,6 +415,7 @@
       become_user: "{{ user }}"
 
     - name: Fix QtPass to honor SSH_AUTH_SOCK
+      when: is_gnome
       lineinfile:
         dest: /usr/share/applications/qtpass.desktop
         state: present
@@ -371,6 +423,7 @@
         line: 'Exec=sh -c "SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) qtpass"'
 
     - name: Install and configure "Blur my Shell" GNOME extension
+      when: is_gnome
       block:
       - shell: |
           export DISPLAY=:0
@@ -395,7 +448,8 @@
       become: yes
       become_user: "{{ user }}"
 
-    - name: Set Catalina wallpaper to zoom (skip silently if logicwax.com is down)
+    - name: Set Catalina wallpaper to zoom
+      when: is_gnome
       shell: |
         export DISPLAY=:0
         export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
@@ -409,7 +463,7 @@
           dconf write /org/gnome/desktop/background/picture-options "'zoom'"
         else
           rm -f "$dest.tmp"
-          echo "logicwax.com unreachable or catalina.tiff missing -- skipping wallpaper step"
+          echo "wallpaper host unreachable or catalina.tiff missing -- skipping wallpaper step"
         fi
       become: yes
       become_user: "{{ user }}"
@@ -505,6 +559,7 @@
       become_user: "{{ user }}"
 
     - name: Install latest Chrome
+      when: is_gnome
       block:
         - shell: |
             wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -519,6 +574,7 @@
       become: yes
 
     - name: Fix browserpass for chrome
+      when: is_gnome
       block:
       - shell: |
           mkdir -p /etc/opt/chrome/native-messaging-hosts/
