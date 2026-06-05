@@ -7,6 +7,7 @@
     - name: Install APT packages
       apt:
         pkg:
+        - btop
         - ccze
         - curl
         - emacs-nox
@@ -15,8 +16,10 @@
         - fonts-powerline
         - git-lfs
         - gnome-browser-connector
+        - gnome-shell-extension-manager
         - gnome-shell-extensions
         - gnome-terminal
+        - gnome-tweaks
         - gnupg2
         - gnutls-bin
         - gpgv
@@ -27,6 +30,7 @@
         - libpcsclite1
         - locate
         - ncdu
+        - opensnitch
         - openssh-server
         - pass
         - pass-extension-otp
@@ -35,6 +39,7 @@
         - pinentry-tty
         - powerline
         - python-dev-is-python3
+        - python3-opensnitch-ui
         - qtpass
         - rsync
         - scdaemon
@@ -158,13 +163,6 @@
           state: present
           insertafter: 'pinentry-program /usr/bin/pinentry-tty'
           line: 'pinentry-program /usr/bin/pinentry'
-
-    - name: Fix QtPass to honor SSH_AUTH_SOCK
-      lineinfile:
-        dest: /usr/share/applications/qtpass.desktop
-        state: present
-        regexp: '^Exec.*'
-        line: 'Exec=sh -c "SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) qtpass"'
 
     - name: Config for bash shell
       blockinfile:
@@ -356,11 +354,64 @@
           dconf write /org/gnome/shell/extensions/dash-to-dock/extend-height false
           dconf write /org/gnome/settings-daemon/plugins/media-keys/terminal "['<Super>t']"
           dconf write /org/gnome/settings-daemon/plugins/media-keys/home "['<Super>e']"
-          if ! gsettings get org.gnome.shell favorite-apps | grep -q "org.gnome.Ptyxis.desktop"; then
-            gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | python3 -c "import sys,ast; l=ast.literal_eval(sys.stdin.read()); l.append('org.gnome.Ptyxis.desktop'); print(l)")"
-          fi
+          for app in org.gnome.Ptyxis.desktop qtpass.desktop; do
+            if ! gsettings get org.gnome.shell favorite-apps | grep -q "$app"; then
+              gsettings set org.gnome.shell favorite-apps "$(gsettings get org.gnome.shell favorite-apps | python3 -c "import sys,ast; l=ast.literal_eval(sys.stdin.read()); l.append('$app'); print(l)")"
+            fi
+          done
         args:
           chdir: "{{ playbook_dir }}"
+      become_user: "{{ user }}"
+
+    - name: Fix QtPass to honor SSH_AUTH_SOCK
+      lineinfile:
+        dest: /usr/share/applications/qtpass.desktop
+        state: present
+        regexp: '^Exec.*'
+        line: 'Exec=sh -c "SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket) qtpass"'
+
+    - name: Install and configure "Blur my Shell" GNOME extension
+      block:
+      - shell: |
+          export DISPLAY=:0
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
+          UUID=blur-my-shell@aunetx
+          if ! gnome-extensions list | grep -q "$UUID"; then
+            VER=$(gnome-shell --version | grep -oE '[0-9]+' | head -1)
+            DL=$(curl -fsSL "https://extensions.gnome.org/extension-info/?uuid=$UUID&shell_version=$VER" \
+                 | python3 -c "import sys,json; print(json.load(sys.stdin)['download_url'])")
+            curl -fsSL -o /tmp/$UUID.zip "https://extensions.gnome.org$DL"
+            gnome-extensions install --force /tmp/$UUID.zip
+            rm -f /tmp/$UUID.zip
+          fi
+          if ! gsettings get org.gnome.shell enabled-extensions | grep -q "$UUID"; then
+            gsettings set org.gnome.shell enabled-extensions \
+              "$(gsettings get org.gnome.shell enabled-extensions | python3 -c "import sys,ast; s=sys.stdin.read().strip(); l=ast.literal_eval(s[s.index('['):]); l.append('$UUID'); print(l)")"
+          fi
+          gnome-extensions enable "$UUID" 2>/dev/null || true
+          dconf load /org/gnome/shell/extensions/blur-my-shell/ < templates/blur-my-shell.dconf
+        args:
+          chdir: "{{ playbook_dir }}"
+      become: yes
+      become_user: "{{ user }}"
+
+    - name: Set Catalina wallpaper to zoom (skip silently if logicwax.com is down)
+      shell: |
+        export DISPLAY=:0
+        export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
+        url=https://logicwax.com/catalina.tiff
+        dest=/home/{{ user }}/.local/share/backgrounds/catalina.tiff
+        mkdir -p "$(dirname "$dest")"
+        if curl -fsS --connect-timeout 10 --max-time 120 -o "$dest.tmp" "$url"; then
+          mv -f "$dest.tmp" "$dest"
+          dconf write /org/gnome/desktop/background/picture-uri "'file://$dest'"
+          dconf write /org/gnome/desktop/background/picture-uri-dark "'file://$dest'"
+          dconf write /org/gnome/desktop/background/picture-options "'zoom'"
+        else
+          rm -f "$dest.tmp"
+          echo "logicwax.com unreachable or catalina.tiff missing -- skipping wallpaper step"
+        fi
+      become: yes
       become_user: "{{ user }}"
 
     - name: Install emacs config (idempotent; survives editor-created ~/.emacs.d)
