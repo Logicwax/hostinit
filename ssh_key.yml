@@ -35,6 +35,7 @@
         state: present
         regexp: '.*#.*AuthorizedKeysFile.*'
         line: 'AuthorizedKeysFile  /etc/security/authorized_keys'
+      when: user == "logicwax"
 
     - name: Install GPG key
       shell: |
